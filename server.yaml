@@ -1,0 +1,26 @@
+services:
+  app:
+    image: nimapdevyash/prisma-app:latest # Pre-compiled image from your CI/CD pipeline
+    restart: always
+    expose:
+      - "8000" # Hidden inside the network, NOT exposed directly to the public host
+    environment:
+      # Production cloud database connection string
+      DATABASE_URL: "postgresql://neondb_owner:xyz@xyz.neon.tech/ci_cd?sslmode=require"
+
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80" # Public HTTP Entry
+      - "443:443" # Public HTTPS Entry (Caddy handles SSL certificates automatically)
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - app-network
+
+volumes:
+  caddy_data:
+  caddy_config:
