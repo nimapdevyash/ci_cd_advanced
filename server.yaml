@@ -1,12 +1,25 @@
 services:
-  app:
-    image: nimapdevyash/prisma-app:latest # Pre-compiled image from your CI/CD pipeline
-    restart: always
+  migration:
+    image: nimapdevyash/prisma-app:latest
+    restart: "no"
     expose:
-      - "8000" # Hidden inside the network, NOT exposed directly to the public host
+      - "8000"
     environment:
       # Production cloud database connection string
-      DATABASE_URL: "postgresql://neondb_owner:xyz@xyz.neon.tech/ci_cd?sslmode=require"
+      DATABASE_URL: "${DATABASE_URL:? Production Database Url is Required}"
+    command: "pnpm dlx prisma migrate deploy" # after deploying the latest migration this will close as main process ends
+
+  app:
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    image: nimapdevyash/prisma-app:latest
+    restart: always
+    expose:
+      - "8000"
+    environment:
+      # Production cloud database connection string
+      DATABASE_URL: "${DATABASE_URL:? Production Database Url is Required}"
 
   caddy:
     image: caddy:latest
