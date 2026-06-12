@@ -1,0 +1,7 @@
+210.79.129.101.sslip.io {
+
+    # Compress traffic on the fly (Gzip, Zstd)
+    encode gzip zstd
+
+    reverse_proxy app:8000
+}
