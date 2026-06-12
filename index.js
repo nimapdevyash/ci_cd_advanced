@@ -18,6 +18,7 @@ app.post("/users", async (req, res) => {
       email,
     },
   });
+
   res.json(user);
 });
 
