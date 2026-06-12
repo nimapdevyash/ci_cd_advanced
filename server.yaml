@@ -1,6 +1,6 @@
 services:
   migration:
-    image: nimapdevyash/prisma-app:latest
+    image: nimapdevyash/advanced_ci_cd:latest
     restart: "no"
     expose:
       - "8000"
@@ -13,7 +13,7 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
-    image: nimapdevyash/prisma-app:latest
+    image: nimapdevyash/advanced_ci_cd:latest
     restart: always
     expose:
       - "8000"
