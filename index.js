@@ -14,7 +14,6 @@ app.post("/users", async (req, res) => {
   const { name, email } = req.body;
   const user = await prisma.user.create({
     data: {
-      test: "updated secrets in github actions",
       name,
       email,
     },
