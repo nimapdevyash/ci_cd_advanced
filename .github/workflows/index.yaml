@@ -1,0 +1,62 @@
+name: Advanced CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create_and_push_image_to_dockerhub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4 # Gets files on GitHub's machine
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # enable caching
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            docker.io/nimapdevyash/advanced_ci_cd:latest
+            docker.io/nimapdevyash/advanced_ci_cd:${{ github.sha }}
+
+  deploy_to_vps:
+    needs:
+      - create_and_push_image_to_dockerhub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Copy ONLY the configuration files directly to the server folder
+      - name: Copy Compose Files to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "base.yaml,server.yaml,Caddyfile" # 👈 No source code, just configs!
+          target: "/home/ubuntu/apps/advanced_ci_cd"
+
+      # SSH in and fire the engines
+      - name: Execute Shell Code on VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/apps/advanced_ci_cd
+            docker compose -f base.yaml -f server.yaml pull
+            docker compose -f base.yaml -f server.yaml up -d --remove-orphans
